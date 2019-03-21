@@ -1,6 +1,6 @@
 ﻿// カーネル関数を指定
-#pragma kernel ForceCS      // 操舵力を計算
-#pragma kernel IntegrateCS  // 速度, 位置を計算
+#pragma kernel ForceCS
+#pragma kernel IntegrateCS
 
 // Boidデータの構造体
 struct BoidData
