@@ -26,28 +26,56 @@
 		float4 color : COLOR;
 	};
 
+	struct v2f {
+		float4 pos : SV_POSITION;
+		float2 tex : TEXCOORD0;
+		float4 color : COLOR;
+	};
+
 	struct FluidParticle {
 		float2 position;
 		float2 velocity;
 	};
+	
+	struct ParticlePoint {
+		float4 position;
+		float2 uv;
+	};
 
-	StructuredBuffer<FluidParticle> _ParticlesBuffer;
+	//StructuredBuffer<FluidParticle> _ParticlesBuffer;
+	StructuredBuffer<ParticlePoint> _ParticlesBuffer;
 
 	// --------------------------------------------------------------------
 	// Vertex Shader
 	// --------------------------------------------------------------------
+	/*
 	v2g vert(uint id : SV_VertexID) {
-
 		v2g o = (v2g)0;
 		o.pos = float4(_ParticlesBuffer[id].position.xy, 0, 1);
 		o.color = float4(0, 0.1, 0.1, 1);
 		return o;
 	}
+	*/
 
+	v2f vert(uint id : SV_VertexID) {
+		v2f o = (v2f)0;
+
+		float halfS = _ParticleRadius;
+		float4x4 billboardMatrix = UNITY_MATRIX_V;
+		billboardMatrix._m03 = billboardMatrix._m13 = billboardMatrix._m23 = billboardMatrix._m33 = 0;
+		float2 uv = _ParticlesBuffer[id].uv;
+		
+		o.pos = _ParticlesBuffer[id].position + mul(float4((uv * 2 - float2(1, 1)) * halfS, 0, 1), billboardMatrix);
+		o.pos = mul(UNITY_MATRIX_VP, o.pos);
+		o.color = float4(0, 0.1, 0.1, 1);
+		o.tex = _ParticlesBuffer[id].uv;
+		return o;
+	}
 	// --------------------------------------------------------------------
 	// Geometry Shader
 	// --------------------------------------------------------------------
 
+	/*
 	[maxvertexcount(4)]
 	void geom(point v2g IN[1], inout TriangleStream<g2f> triStream) {
 
@@ -76,11 +104,11 @@
 		triStream.RestartStrip();
 
 	}
-
+	*/
 	// --------------------------------------------------------------------
 	// Fragment Shader
 	// --------------------------------------------------------------------
-	fixed4 frag(g2f input) : SV_Target {
+	fixed4 frag(v2f input) : SV_Target {
 		return tex2D(_MainTex, input.tex)*_WaterColor;
 	}
 
@@ -97,7 +125,7 @@
 			CGPROGRAM
 			#pragma target   5.0
 			#pragma vertex   vert
-			#pragma geometry geom
+			//#pragma geometry geom
 			#pragma fragment frag
 			ENDCG
 		}

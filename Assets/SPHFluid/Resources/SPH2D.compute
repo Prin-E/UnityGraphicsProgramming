@@ -43,7 +43,7 @@ RWStructuredBuffer<ParticleForces>  _ParticlesForceBufferWrite;
 
 // ▼ シェーダ定数の定義 -----------------------
 cbuffer CB {
-	int   _NumParticles;		// 粒子数
+	uint   _NumParticles;		// 粒子数
 	float _TimeStep;			// 時間刻み幅(dt)
 	float _Smoothlen;			// 粒子半径
 	float _PressureStiffness;	// Beckerの係数
@@ -79,7 +79,8 @@ inline float CalculateDensity(float r_sq) {
 /// Pressure = B * ((rho / rho_0)^gamma  - 1)
 /// 圧力定数Bは正確に計算するべきだが、リアルタイム向きではないので適当な値にする
 inline float CalculatePressure(float density) {
-	return _PressureStiffness * max(pow(density / _RestDensity, 7) - 1, 0);
+	float densityPow = pow(abs(density / _RestDensity), 7);
+	return _PressureStiffness * max(densityPow * (density < 0 ? -1 : 1) - 1, 0);
 }
 
 /// Spikyカーネルの実装:

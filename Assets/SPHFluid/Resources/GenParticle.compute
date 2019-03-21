@@ -1,0 +1,40 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel GenParticleMain
+
+#define THREAD_SIZE_X 1024
+
+struct Particle {
+	float2 position;
+	float2 velocity;
+};
+
+struct ParticlePoint {
+    float4 position;
+    float2 uv;
+};
+
+StructuredBuffer  <Particle>        _ParticlesBufferRead;
+RWStructuredBuffer<ParticlePoint>   _ParticlesBufferWrite;
+
+[numthreads(THREAD_SIZE_X,1,1)]
+void GenParticleMain (uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x;
+    const uint numVertices = 4;
+    const uint outIndex = index * numVertices;
+
+    float2 uv[numVertices];
+    uv[0] = float2(0, 0);
+    uv[1] = float2(0, 1);
+    uv[2] = float2(1, 1);
+    uv[3] = float2(1, 0);
+    //uv[3] = float2(0, 0);
+    //uv[4] = float2(1, 1);
+    //uv[5] = float2(1, 0);
+
+    [unroll]
+    for(uint i = 0; i < numVertices; i++) {
+        _ParticlesBufferWrite[outIndex + i].position = float4(_ParticlesBufferRead[index].position, 0, 1);
+        _ParticlesBufferWrite[outIndex + i].uv = uv[i];
+    }
+}
